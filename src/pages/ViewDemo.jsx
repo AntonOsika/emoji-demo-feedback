@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from '../supabaseClient';
 import { Box, Button, Container, Flex, FormControl, FormLabel, Heading, Input, Text, Textarea, VStack } from "@chakra-ui/react";
 import { FaThumbsUp, FaThumbsDown, FaSmile, FaMeh, FaFrown } from "react-icons/fa";
 
@@ -17,30 +18,84 @@ const ViewDemo = () => {
     frown: 0,
   });
 
-  const handleFeedbackSubmit = (e) => {
+  const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
-    // Logic to handle feedback submission and save to the database
-    setFeedbackList([...feedbackList, feedback]);
-    setFeedback("");
+    const { data, error } = await supabase
+      .from('feedback')
+      .insert([{ demo_id: id, content: feedback }]);
+
+    if (error) {
+      console.error('Error submitting feedback:', error);
+    } else {
+      setFeedbackList([...feedbackList, data[0]]);
+      setFeedback("");
+    }
   };
 
-  const handleEmojiClick = (emoji) => {
-    // Logic to handle emoji reaction and save to the database
-    setEmojiReactions((prevReactions) => ({
-      ...prevReactions,
-      [emoji]: prevReactions[emoji] + 1,
-    }));
+  const handleEmojiClick = async (emoji) => {
+    const { data, error } = await supabase
+      .from('reactions')
+      .insert([{ demo_id: id, emoji }]);
+
+    if (error) {
+      console.error('Error submitting reaction:', error);
+    } else {
+      setEmojiReactions((prevReactions) => ({
+        ...prevReactions,
+        [emoji]: prevReactions[emoji] + 1,
+      }));
+    }
   };
 
   useEffect(() => {
-    // Fetch the demo details from the database or API using the id
     const fetchDemo = async () => {
-      // Placeholder demo data
-      const demoData = { id, headline: `Demo ${id}`, content: `This is the content of demo ${id}.` };
-      setDemo(demoData);
+      const { data, error } = await supabase
+        .from('demos')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching demo:', error);
+      } else {
+        setDemo(data);
+      }
+    };
+
+    const fetchFeedback = async () => {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('demo_id', id);
+
+      if (error) {
+        console.error('Error fetching feedback:', error);
+      } else {
+        setFeedbackList(data);
+      }
+    };
+
+    const fetchReactions = async () => {
+      const { data, error } = await supabase
+        .from('reactions')
+        .select('emoji, count')
+        .eq('demo_id', id)
+        .group('emoji');
+
+      if (error) {
+        console.error('Error fetching reactions:', error);
+      } else {
+        const reactions = data.reduce((acc, { emoji, count }) => {
+          acc[emoji] = count;
+          return acc;
+        }, {});
+        setEmojiReactions(reactions);
+      }
     };
 
     fetchDemo();
+    fetchFeedback();
+    fetchReactions();
   }, [id]);
 
   if (!demo) {

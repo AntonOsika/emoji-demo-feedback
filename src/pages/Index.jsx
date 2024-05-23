@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from '../supabaseClient';
 import { Container, Text, VStack, Button, Box, Heading } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 
@@ -9,11 +10,15 @@ const Index = () => {
     // Fetch the list of demos from the database or API
     // For now, we'll use a placeholder list
     const fetchDemos = async () => {
-      const demoList = [
-        { id: 1, headline: "Demo 1" },
-        { id: 2, headline: "Demo 2" },
-      ];
-      setDemos(demoList);
+      const { data, error } = await supabase
+        .from('demos')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching demos:', error);
+      } else {
+        setDemos(data);
+      }
     };
 
     fetchDemos();

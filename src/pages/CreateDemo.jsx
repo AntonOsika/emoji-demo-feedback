@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { Box, Button, Container, FormControl, FormLabel, Heading, Input, VStack } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from '../supabaseClient';
 
 const CreateDemo = () => {
   const [headline, setHeadline] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Logic to handle form submission and save the headline to the database
-    console.log("Demo created with headline:", headline);
+    const { data, error } = await supabase
+      .from('demos')
+      .insert([{ headline }]);
 
-    // Redirect to the home page after creating the demo
-    navigate("/");
+    if (error) {
+      console.error('Error creating demo:', error);
+    } else {
+      console.log('Demo created:', data);
+      navigate("/");
+    }
   };
 
   return (
