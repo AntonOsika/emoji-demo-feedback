@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Button, Container, Flex, FormControl, FormLabel, Heading, Input, Text, Textarea, VStack } from "@chakra-ui/react";
 import { FaThumbsUp, FaThumbsDown, FaSmile, FaMeh, FaFrown } from "react-icons/fa";
 
+import { useParams } from "react-router-dom";
+
 const ViewDemo = () => {
+  const { id } = useParams();
+  const [demo, setDemo] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [feedbackList, setFeedbackList] = useState([]);
   const [emojiReactions, setEmojiReactions] = useState({
@@ -28,12 +32,32 @@ const ViewDemo = () => {
     }));
   };
 
+  useEffect(() => {
+    // Fetch the demo details from the database or API using the id
+    const fetchDemo = async () => {
+      // Placeholder demo data
+      const demoData = { id, headline: `Demo ${id}`, content: `This is the content of demo ${id}.` };
+      setDemo(demoData);
+    };
+
+    fetchDemo();
+  }, [id]);
+
+  if (!demo) {
+    return (
+      <Container centerContent maxW="container.md" py={10}>
+        <Text>Loading...</Text>
+      </Container>
+    );
+  }
+
   return (
     <Container centerContent maxW="container.md" py={10}>
       <Box w="100%" p={4} borderWidth={1} borderRadius="lg" boxShadow="lg">
         <Heading as="h2" size="xl" mb={6} textAlign="center">
-          Demo Headline
+          {demo.headline}
         </Heading>
+        <Text mb={6}>{demo.content}</Text>
         <VStack spacing={4} align="stretch">
           <Box>
             <Heading as="h3" size="md" mb={2}>
